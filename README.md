@@ -13,6 +13,7 @@ codex/
 skills/                skills shared by both Claude Code and Codex
 install.sh             symlinks everything into ~/.claude, ~/.codex, ~/.agents
 uninstall.sh           removes those symlinks, restoring any .bak backups
+import-skills.sh       finds real (non-symlinked) skills already installed outside this repo and imports them
 ```
 
 ## One instructions file
@@ -89,6 +90,22 @@ tree ~/.claude/skills ~/.agents/skills ~/.codex/skills
 ```
 
 Removes every symlink `install.sh` would create, but only if it actually points into this repo (a foreign symlink or a real file at the same path is left alone). Restores any `.bak` backup `install.sh` made.
+
+## Importing skills installed outside this repo
+
+Other tools (like `ctx7 setup`) sometimes drop a real, non-symlinked skill directly into `~/.claude/skills/`, `~/.agents/skills/`, or `~/.codex/skills/`. To bring one of those into this repo instead of losing it to the next reinstall:
+
+```bash
+./import-skills.sh
+```
+
+Needs `fzf` (`brew install fzf`). It scans all three directories for real skill folders not already managed by this repo, lets you multi-select which ones to import (↑/↓ to navigate, Tab or Space to select, Enter to confirm), then for each one:
+
+- If it's a real copy in more than one location already, it's imported as shared — no prompt.
+- If it's real in exactly one location, you're asked whether to keep it tool-specific or make it shared, matching the `skills/` vs `claude/skills/`/`codex/skills/` split above.
+- If the same skill has different content in more than one location, it's skipped with a warning instead of silently picking one and discarding the other.
+
+It moves the skill into the repo and re-symlinks the original path(s), following the same convention as `install.sh`.
 
 ## Making changes
 
