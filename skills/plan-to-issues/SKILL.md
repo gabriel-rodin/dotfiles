@@ -1,0 +1,347 @@
+---
+name: plan-to-issues
+description: >-
+  Convert a PLAN into GitHub issues with native sub-issue hierarchy.
+  Use when a plan is ready to be registered as deployable,
+  independent work items. Creates self-contained issues where
+  each sub-issue can be independently branched, PRed, and merged.
+disable-model-invocation: true
+argument-hint: "[plan-file-or-description]"
+allowed-tools: Bash, Read, Grep, Glob
+---
+
+# Plan to Issues
+
+Convert a completed PLAN into GitHub parent + sub-issues using native sub-issue API.
+
+Follow every step in order. Stop and report if any step fails.
+
+## Three Principles
+
+1. **Independent** — Each sub-issue is self-contained. A new session with zero context can start work from the issue alone.
+2. **Deployable** — Each sub-issue can be independently branched, PRed, and merged without breaking existing functionality.
+3. **Structured** — Issue body has essentials only. Technical details and background go into comments.
+
+## Step 1: Determine Plan Source
+
+Check if `$ARGUMENTS` is provided:
+
+- **With file** (`/plan-to-issues plans/my-plan.md`):
+  Verify the file exists (`test -f "$ARGUMENTS"`), then read it.
+  Save the path: `PLAN_FILE="$ARGUMENTS"` (used later for bidirectional linking).
+
+- **With text** (`/plan-to-issues "Add caching layer"`):
+  If `$ARGUMENTS` is not a valid file path, use it as plan description.
+  Set `PLAN_FILE=""` (no file to link back to).
+
+- **Without arguments** (`/plan-to-issues`):
+  Read `plans/context.md` and extract the most recent PLAN section's decisions and notes.
+  Set `PLAN_FILE=""` (no file to link back to).
+
+If no plan source is found, stop and ask the user to run PLAN first.
+
+## Step 2: Check GitHub Environment
+
+```bash
+REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+gh label list --json name --jq '.[].name'
+```
+
+Search for existing issues with similar titles to prevent duplicates:
+```bash
+gh issue list --state open --search "<plan-title-keywords>" --json number,title --jq '.[] | "#\(.number) \(.title)"'
+```
+
+If duplicates found, inform the user and ask whether to continue or update existing issues.
+
+## Step 3: Decompose into Deployable Units
+
+Extract work units from the plan. For each candidate unit, verify:
+
+```
+For each unit:
+  Can this be merged independently without breaking existing features?
+  ├── YES → Keep as separate sub-issue
+  └── NO  → Merge with related unit(s) into one sub-issue
+
+  Does this modify the same files as another unit?
+  ├── YES → Consider merging or enforce ordering
+  └── NO  → Safe for parallel work
+```
+
+Classify dependencies:
+- **Parallel** — No shared files, no ordering needed
+- **Sequential** — Must complete A before B (note in comment, but both are independently deployable)
+
+## Step 3b: Determine Labels
+
+### Parent issue labels
+
+Infer type from plan content:
+- New functionality → `feat`
+- Improving existing code → `refactor` or `chore`
+- Fixing a problem → `fix`
+- Documentation only → `documentation`
+
+### Sub-issue labels
+
+- Inherit the type label from parent
+- Add priority based on plan ordering and dependencies:
+  - No dependencies, foundational work → `priority:must`
+  - Depends on other sub-issues → `priority:should`
+  - Nice-to-have, can be deferred → `priority:could`
+- Use only labels that already exist in the repository (from Step 2)
+- Do NOT create new labels
+
+## Step 4: Draft Issue Content
+
+### Parent issue body (overview only)
+
+```markdown
+## Overview
+[1-2 sentences: what and why]
+
+## Background
+[2-3 sentences: context and motivation]
+
+## Plan Document
+<!-- Include ONLY when PLAN_FILE is non-empty -->
+Source plan: [`<PLAN_FILE>`](<permalink>) <!-- permalink = GitHub blob URL for the file -->
+
+## Sub-issues
+Linked via GitHub native sub-issues (see Sub-issues section below).
+
+| # | Title | Deployable | Depends on |
+|---|-------|-----------|------------|
+| 1 | ... | Yes | — |
+| 2 | ... | Yes | — |
+| 3 | ... | Yes | #1 recommended |
+```
+
+> **Conditional:** Omit the `## Plan Document` section entirely when `PLAN_FILE` is empty (text or context-based plans).
+
+### Issue content rules
+
+- **Titles**: Always in English, under 70 characters
+- **Body/comments**: Follow the project's configured language (check recent issues)
+
+### Sub-issue body (essentials only)
+
+```markdown
+## Purpose
+[1-2 sentences: why this work item exists]
+
+## Changes
+- `path/to/file.ts` — what changes
+- `path/to/other.ts` — what changes
+
+## Acceptance Criteria
+- [ ] Specific, verifiable criterion 1
+- [ ] Specific, verifiable criterion 2
+- [ ] Existing tests pass
+- [ ] Can be merged independently
+```
+
+### Sub-issue comments (details and background)
+
+**Comment 1 — Technical Details:**
+```markdown
+## Technical Details
+
+### Exact Changes
+[Precise code/config/YAML changes to make]
+
+### Steps
+1. [Concrete step]
+2. [Concrete step]
+```
+
+**Comment 2 — Background & References** (if needed):
+```markdown
+## Background
+[Why this approach was chosen]
+
+## References
+- [Link 1](url)
+- [Link 2](url)
+
+## Dependencies
+- Precedes: #NNN depends on this
+- Follows: Recommended after #NNN (but independently deployable)
+```
+
+## Step 5: Confirm with User
+
+Present a summary before creating anything:
+
+```
+Plan: "<title>"
+
+Parent: "<parent title>" (labels: <detected labels>)
+  Sub-1: "<title>" — <files> (deploy: independent)
+  Sub-2: "<title>" — <files> (deploy: independent)
+  Sub-3: "<title>" — <files> (deploy: independent, after Sub-1 recommended)
+
+Total: <N> sub-issues, all independently deployable
+
+Proceed?
+```
+
+Wait for user approval. Apply any requested changes.
+
+## Step 6: Create Issues on GitHub
+
+### 6a. Create parent issue
+
+Build the parent body from Step 4. When `PLAN_FILE` is non-empty, include the `## Plan Document` section
+with a permalink constructed as:
+
+```bash
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+PLAN_LINK="https://github.com/$REPO/blob/$BRANCH/$PLAN_FILE"
+```
+
+```bash
+PARENT_URL=$(gh issue create \
+  --title "<title>" \
+  --label "<labels>" \
+  --body "$(cat <<'EOF'
+<parent body from Step 4, with Plan Document section if PLAN_FILE is set>
+EOF
+)")
+PARENT_NUM=$(echo "$PARENT_URL" | grep -o '[0-9]*$')
+```
+
+### 6b. Create sub-issues (in parallel if independent)
+
+Initialize the array that collects sub-issue numbers across this step and Steps 6e/6f/7b:
+```bash
+SUB_NUMS=()
+```
+
+For each sub-issue:
+```bash
+SUB_URL=$(gh issue create \
+  --title "<title>" \
+  --label "<labels>" \
+  --body "$(cat <<'EOF'
+<sub-issue body from Step 4>
+EOF
+)")
+SUB_NUM=$(echo "$SUB_URL" | grep -o '[0-9]*$')
+SUB_NUMS+=("$SUB_NUM")
+```
+
+### 6c. Add comments to each sub-issue
+
+```bash
+gh issue comment $SUB_NUM --body "$(cat <<'EOF'
+<Comment 1: Technical Details>
+EOF
+)"
+
+# Only if background/references exist:
+gh issue comment $SUB_NUM --body "$(cat <<'EOF'
+<Comment 2: Background & References>
+EOF
+)"
+```
+
+### 6d. Link sub-issues to parent via GitHub native API
+
+```bash
+# Get the internal ID (not node_id) for the sub-issue
+SUB_ID=$(gh api /repos/$REPO/issues/$SUB_NUM --jq .id)
+
+# Create native sub-issue relationship
+gh api /repos/$REPO/issues/$PARENT_NUM/sub_issues \
+  -X POST -F sub_issue_id=$SUB_ID --jq '.id'
+```
+
+Repeat for every sub-issue.
+
+**If the sub-issue API fails** (HTTP 500, 422, or 404):
+
+1. Add `sub-issue` label to the sub-issue (if the label exists)
+2. Add a comment on the parent issue listing the sub-issue: `Sub-issue: #NNN — <title>`
+3. Add a comment on the sub-issue: `Parent: #PARENT_NUM`
+4. Inform the user: "Native sub-issue linking failed. Linked via labels and comments instead. You can manually link at github.com."
+5. Continue with remaining sub-issues — do NOT stop the entire process
+
+### 6e. Update parent body with sub-issue numbers
+
+Edit the parent issue body to include actual sub-issue numbers in the table.
+
+```bash
+gh issue edit $PARENT_NUM --body "$(cat <<'EOF'
+<updated body with #NNN references>
+EOF
+)"
+```
+
+### 6f. Update plan document with issue references
+
+**Skip this step if `PLAN_FILE` is empty.**
+
+Append a `## Created Issues` section to the plan document so the plan links forward to its issues:
+
+```bash
+if [ -n "$PLAN_FILE" ]; then
+  cat >> "$PLAN_FILE" <<EOF
+
+---
+
+## Created Issues
+
+> Auto-generated by \`/plan-to-issues\` — do not edit manually.
+
+- **Parent**: #${PARENT_NUM} — <parent title>
+$(for i in "${!SUB_NUMS[@]}"; do
+  echo "- **Sub-issue**: #${SUB_NUMS[$i]} — <sub-issue $((i+1)) title>"
+done)
+
+**Created**: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+EOF
+fi
+```
+
+This creates a bidirectional link: the parent issue points to the plan (via `## Plan Document`),
+and the plan points back to all created issues (via `## Created Issues`).
+
+## Step 7: Report Result
+
+```
+Registered <N> issues:
+
+Parent: #<num> — "<title>"
+  Sub: #<num> — "<title>" (deploy: independent)
+  Sub: #<num> — "<title>" (deploy: independent)
+  Sub: #<num> — "<title>" (deploy: independent, after #<num> recommended)
+
+Comments: Technical details added to each sub-issue
+Hierarchy: GitHub native sub-issues linked
+Bidirectional links: <status>
+  - Parent issue → plan document: <YES if PLAN_FILE was set, otherwise SKIPPED>
+  - Plan document → issues: <YES if PLAN_FILE was set, otherwise SKIPPED>
+```
+
+Print all issue URLs.
+
+## Step 7b: Update Context Document
+
+Record the created issues in `plans/context.md` for cross-session continuity, using the `SUB_NUMS` array populated in Step 6b.
+
+```bash
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+mkdir -p plans
+
+cat >> plans/context.md <<EOF
+
+## Plan-to-Issues Result (${TIMESTAMP})
+
+- **Parent Issue**: #${PARENT_NUM}
+- **Sub-issues**: $(for n in "${SUB_NUMS[@]}"; do printf "#%s " "$n"; done)
+- **Created At**: ${TIMESTAMP}
+- **Total**: ${#SUB_NUMS[@]} sub-issues
+EOF
+```
