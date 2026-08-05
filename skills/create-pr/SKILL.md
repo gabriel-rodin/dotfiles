@@ -1,9 +1,9 @@
 ---
-name: pr-description
-description: Generate a detailed pull request description when opening a new PR, running `gh pr create`, or when asked to write/draft a PR description. Produces a Summary, distinct Problem, Root Cause, and Fixes sections for bug-fix PRs, feature details for feature PRs, and Testing guidance. Not for editing an existing PR's description after the fact — see pr-description-update for that.
+name: create-pr
+description: Create a pull request with a detailed description when opening a new PR, running `gh pr create`, or when asked to write/draft a PR description. Produces a Summary, distinct Problem, Root Cause, and Fixes sections for bug-fix PRs, feature details for feature PRs, and Testing guidance. Not for editing an existing PR's description after the fact.
 ---
 
-# PR Description
+# Create a PR
 
 ## Title
 
@@ -82,4 +82,4 @@ After creation, verify the rendered body and branches:
 gh pr view <number> --json title,baseRefName,headRefName,body
 ```
 
-Confirm the output contains real line breaks and the expected Markdown sections before reporting the PR complete. Confirm the target base branch and that the branch is pushed before creating — see this repo's branching model in CLAUDE.md if unsure.
+Confirm the output contains real line breaks and the expected Markdown sections before reporting the PR complete. Confirm the target base branch and that the branch is pushed before creating.
