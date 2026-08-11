@@ -4,14 +4,17 @@ Scaffold for a fresh `mockups/`. Copy [`templates/`](templates/) into `mockups/s
 marked *template* below are project-agnostic and stay unchanged; `tokens.css`, `app.css`, and
 `screens.mjs` arrive as empty starters you fill in, and `lib.mjs` you write from scratch. The
 starters are deliberately contentless: a component kit shipped in advance is how a mockup acquires
-components it never needed. As copied, the scaffold builds and shoots a placeholder screen, so the
-pipeline is verifiable before any design work exists.
+components it never needed. `tokens.css` arrives with every token blank on purpose — `build.mjs`
+refuses to build while any remain, so give each a placeholder value before the first build. Once
+they're non-blank, the scaffold's `screens.mjs` placeholder screen builds and shoots end to end, so
+the pipeline is verifiable before any design work exists.
 
 ```
 mockups/
+├── .gitignore          ignores src/out/ — keeps the ignore rule confined to mockups/
 ├── index.html          contact sheet (generated)
 ├── *.png               one per screen, plus the design-system sheet (generated, committed)
-├── render-stamp.json   content hash per screen, written by shoot.sh (committed)
+├── render-stamp.json   content + PNG hash per screen, written by shoot.sh (committed)
 ├── README.md
 ├── design-system.md
 ├── user-flow.md
@@ -29,7 +32,8 @@ mockups/
     └── out/            generated (gitignored)
 ```
 
-Add `mockups/src/out/` to the repo's `.gitignore`.
+Add `mockups/src/out/` to `mockups/.gitignore` (create it) — not the repo's root `.gitignore`,
+since every pipeline change must stay confined to `mockups/` (step 10).
 
 ## The screen object
 
@@ -88,6 +92,10 @@ differs — not a mechanical doubling of the matrix.
 up as a missing background in one render and nowhere else. `build.mjs` refuses to build while any
 remain and names them. A token this product does not need gets deleted, not left empty.
 
+The same gate requires every semantic token declared under `[data-theme='light']` to be restated
+under `[data-theme='dark']`, even when the value is intentionally identical — an omitted dark token
+falls through to the light value with no error, so a dark screen quietly renders as a light one.
+
 ## Why the stamp exists
 
 `build.mjs` and `shoot.sh` are separate steps, and `src/out/` is gitignored, so a source edit
@@ -95,14 +103,21 @@ without a re-render leaves a stale PNG that is invisible in review. `render.mjs`
 source of truth for what a screen's HTML is, so `build.mjs` and `check.mjs` can never disagree
 about what a PNG should have been rendered from.
 
-The digest covers markup, theme, and canvas size; the stylesheets are hashed separately because
-they are shared — a token change must invalidate every screen at once. Content hashes rather than
-mtimes: a fresh clone stamps every file with the checkout time, so mtime comparison is worthless in
-CI, which is exactly where this needs to work.
+The digest covers markup, theme, canvas size, and the contact-sheet caption fields (`group`,
+`screen`, `note`) — so editing a caption without re-rendering is caught too, not just a markup
+change. The stylesheets are hashed separately because they are shared — a token change must
+invalidate every screen at once. Content hashes rather than mtimes: a fresh clone stamps every file
+with the checkout time, so mtime comparison is worthless in CI, which is exactly where this needs to
+work.
 
-`check.mjs` exits non-zero on drift and catches three cases: a screen whose markup changed, a
-screen with no PNG, and a stamp entry for a screen that no longer exists. It works as a pre-commit
-hook or a CI gate.
+The stamp also records each PNG's own byte hash, not just the source digest. That is what catches a
+hand-edited PNG: source and digest still match, but the committed image no longer matches what
+`shoot.sh` actually rendered.
+
+`check.mjs` exits non-zero on drift and catches five cases: a screen whose source or caption
+changed, a screen with no PNG, a PNG whose bytes were hand-edited after the last render, a stray
+`.png` on disk with no matching screen, and a stamp entry for a screen that no longer exists. It
+works as a pre-commit hook or a CI gate.
 
 ## What is committed, and why
 

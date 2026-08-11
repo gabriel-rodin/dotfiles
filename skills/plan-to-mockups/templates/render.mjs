@@ -15,13 +15,16 @@ ${s.frame ? `<div class="${s.frame}">${s.html}</div>` : s.html}
 `;
 }
 
-// Covers everything that changes the pixels: markup, theme, and canvas size.
+// Covers everything that changes the pixels (markup, theme, canvas size) plus the
+// contact-sheet caption fields, which live only in index.html and never touch page(s) —
+// without them, editing a caption without re-rendering would pass check.mjs silently.
 // The stylesheets are hashed separately by digestStyles() — they are shared, so a
 // token change must invalidate every screen at once.
 export function digest(s, stylesHash) {
   return createHash('sha256')
     .update(`${s.w}x${s.h}\n${stylesHash}\n`)
     .update(page(s))
+    .update(`\n${s.group}\n${s.screen}\n${s.note}\n`)
     .digest('hex')
     .slice(0, 16);
 }

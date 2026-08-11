@@ -5,6 +5,7 @@ import { writeFileSync, readFileSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import screens, { meta } from './screens.mjs';
+import { createHash } from 'node:crypto';
 import { page, digest, digestStyles } from './render.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -17,6 +18,16 @@ const esc = (v) =>
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
+// A repeated id would silently overwrite the earlier screen's HTML and PNG with no error.
+const seenIds = new Set();
+for (const s of screens) {
+  if (seenIds.has(s.id)) {
+    console.error(`Duplicate screen id "${s.id}" — ids must be unique.`);
+    process.exit(1);
+  }
+  seenIds.add(s.id);
+}
+
 const tokensCss = readFileSync(resolve(here, 'tokens.css'), 'utf8');
 
 // An unfilled token (`--bg-canvas: ;`) is valid CSS that resolves to nothing, so it
@@ -27,6 +38,28 @@ if (unfilled.length) {
   console.error(
     `tokens.css has ${unfilled.length} unfilled token(s):\n  ${unfilled.join('\n  ')}\n\n`
       + 'Give each a value, or delete the ones this product does not need.',
+  );
+  process.exit(1);
+}
+
+// Dark is not automatically derived — a token declared under :root/[data-theme='light']
+// but never restated under [data-theme='dark'] silently falls through to the light value,
+// so a dark screen looks light with no error anywhere.
+const block = (css, selector) => {
+  const m = selector.exec(css);
+  if (!m) return '';
+  const start = css.indexOf('{', m.index);
+  const end = css.indexOf('}', start);
+  return css.slice(start + 1, end);
+};
+const tokenNames = (css) => new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+const lightNames = tokenNames(block(tokensCss, /\[data-theme=['"]light['"]\]\s*\{/));
+const darkNames = tokenNames(block(tokensCss, /\[data-theme=['"]dark['"]\]\s*\{/));
+const missingDark = [...lightNames].filter((n) => !darkNames.has(n));
+if (missingDark.length) {
+  console.error(
+    `[data-theme='dark'] is missing ${missingDark.length} token(s) declared for light:\n  ${missingDark.join('\n  ')}\n\n`
+      + 'Restate each, even if the value is intentionally identical.',
   );
   process.exit(1);
 }
@@ -103,12 +136,18 @@ writeFileSync(
 );
 
 // Content stamp. shoot.sh promotes this to ../render-stamp.json after a successful
-// render, so check.mjs can tell whether the committed PNGs match the sources.
-// Deliberately has no timestamp — re-rendering unchanged screens must not produce a diff.
+// render, so check.mjs can tell whether the committed PNGs and index.html match the
+// sources. `meta` feeds index.html directly (title, subtitle, doc links) but touches no
+// screen's own digest, so it is hashed separately — otherwise editing it would go
+// undetected by check.mjs. Deliberately has no timestamp — re-rendering unchanged
+// screens must not produce a diff.
 writeFileSync(
   resolve(outDir, 'manifest.json'),
   JSON.stringify(
-    { screens: Object.fromEntries(screens.map((s) => [s.id, digest(s, stylesHash)])) },
+    {
+      meta: createHash('sha256').update(JSON.stringify(meta)).digest('hex').slice(0, 16),
+      screens: Object.fromEntries(screens.map((s) => [s.id, digest(s, stylesHash)])),
+    },
     null,
     2,
   ) + '\n',
