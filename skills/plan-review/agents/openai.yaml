@@ -1,0 +1,7 @@
+interface:
+  display_name: "Plan Review"
+  short_description: "Thorough, severity-ranked implementation plan review"
+  default_prompt: "Use $plan-review with a relative Markdown plan path, such as plans/my-plan.md, to audit it for material blockers, contradictions, and validation gaps."
+
+policy:
+  allow_implicit_invocation: false
