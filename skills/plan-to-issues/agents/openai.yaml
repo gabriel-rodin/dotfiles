@@ -1,0 +1,7 @@
+interface:
+  display_name: "Plan to Issues"
+  short_description: "Turn plans into right-sized GitHub issues"
+  default_prompt: "Use $plan-to-issues with the repository-relative path of the plan file to create the appropriate GitHub issue set."
+
+policy:
+  allow_implicit_invocation: false
