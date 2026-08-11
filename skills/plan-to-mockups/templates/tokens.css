@@ -1,0 +1,64 @@
+/* Design tokens — the only place a colour, spacing, or radius value is defined.
+   Semantic values are transcribed verbatim from the implementation plan §N.
+   Values marked DERIVED are additions made for the mockups; see assumptions.md. */
+
+:root,
+[data-theme='light'] {
+  /* Surfaces */
+  --bg-canvas: ;
+  --bg-surface: ;
+  --bg-surface-raised: ;
+
+  /* Lines */
+  --border-subtle: ; /* decorative only — never delimits a control */
+  --border-strong: ; /* every interactive boundary */
+
+  /* Text */
+  --text-primary: ;
+  --text-secondary: ;
+  --text-tertiary: ;
+
+  /* Brand + status */
+  --brand-base: ;
+  --brand-on-base: ;
+  --success-base: ;
+  --danger-base: ;
+  --warning-base: ;
+
+  /* DERIVED — every one of these needs an assumptions.md entry */
+  --brand-tint: ;
+  --danger-tint: ;
+  --warning-tint: ;
+  --skeleton: ;
+  --scrim: ;
+
+  /* Elevation */
+  --elev-raised: ;
+  --elev-overlay: ;
+  --elev-sticky: ;
+}
+
+[data-theme='dark'] {
+  /* Every token above, re-stated. Dark is not a filter over light:
+     it usually expresses depth with surface lightness rather than shadow,
+     and needs its own lifted variants of any saturated hue. */
+}
+
+:root {
+  /* Spacing — N pt base */
+  --sp-xs: ;
+  --sp-sm: ;
+  --sp-md: ;
+  --sp-lg: ; /* screen gutter */
+  --sp-xl: ;
+  --sp-xxl: ;
+
+  /* Radius */
+  --r-sm: ;
+  --r-md: ;
+  --r-lg: ;
+  --r-pill: 999px;
+
+  /* Type */
+  --font: ;
+}

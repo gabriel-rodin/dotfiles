@@ -1,0 +1,6 @@
+/* Component classes — only the ones step 4's direction actually named.
+   There is deliberately no starter kit here: "cards, buttons, inputs, chips, tabs"
+   written in advance is how a mockup acquires components it never needed.
+
+   Every value comes from a token in tokens.css. A literal hex or pixel gap in this
+   file is a missing token, not a shortcut. */
