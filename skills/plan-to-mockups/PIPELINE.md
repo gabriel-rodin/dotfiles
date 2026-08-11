@@ -9,7 +9,7 @@ pipeline is verifiable before any design work exists.
 
 ```
 mockups/
-├── index.html          contact sheet (generated — never hand-edited)
+├── index.html          contact sheet (generated)
 ├── *.png               one per screen, plus the design-system sheet (generated, committed)
 ├── render-stamp.json   content hash per screen, written by shoot.sh (committed)
 ├── README.md

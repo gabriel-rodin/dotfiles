@@ -92,80 +92,25 @@ you intend to touch.
 
 ## 4. Set the design direction
 
-**Call the Skill tool on `frontend-design:frontend-design`** — it ships as a plugin, so the
-plugin-qualified name is what the Skill tool resolves; the bare `frontend-design` works only if it
-is installed as a plain skill. Check the available-skills listing for which form is present. It owns
-aesthetic judgement — palette, type pairing,
-layout concept, the signature element, and interface copy. Do not re-derive that judgement
-yourself; this step exists to borrow it.
+**Call the Skill tool on `frontend-design`** — it ships as a plugin, so the plugin-qualified name
+is what the Skill tool resolves; the bare `frontend-design` works only if it is installed as a
+plain skill. Check the available-skills listing for which form is present. This call is mandatory:
+skipping it is precisely why an AI-generated mockup reads as AI-generated. It owns aesthetic
+judgement — palette, type pairing, layout concept, the signature element, and interface copy. Do
+not re-derive that judgement yourself; this step exists to borrow it.
 
-**Borrow all of it, not just the palette.** The failure mode this step exists to prevent is asking
-`frontend-design` for colour and type, then quietly making every *structural* decision yourself in
-step 5 — row height, what a row contains, how chrome relates to content, which controls exist at
-all. Those decide whether the result looks designed far more than the hex values do. So the brief
-must ask for, and the answer must name:
-
-- **Screen anatomy** — the bands a window is made of, and what each one is worth its height for.
-- **Row anatomy** — for any list-shaped product, the single most repeated element in the whole set:
-  how many lines, what is on each, what is omitted, and how tall.
-- **Density** — how many rows or items are visible at the default size (see the third rule below).
-- **Chrome-versus-content hierarchy** — which type is furniture and which is the user's own data,
-  and how a glance tells them apart.
-- **The component vocabulary this product actually needs** — which is a finding, not a checklist.
-  A dense keyboard-first tool may legitimately have no buttons and no chips anywhere; a footer of
-  keyboard hints can replace both.
-- **The signature element**, and what it encodes. If the product has one repeated slot that could
-  carry meaning, decide what meaning earns it — and prefer the signal that *differs* row to row.
-  A state that reads the same on 95% of rows is wallpaper, however important the fact is; put that
-  one in a badge on the exceptions and give the slot to something with more entropy.
+Brief it and bound it per [`DESIGN-DIRECTION.md`](DESIGN-DIRECTION.md): what the brief must ask
+for, the three rules that bound it, and the calibration to fall back on in the one case below.
 
 On the **update** branch this step is skipped — the committed direction stands — unless the plan's
 visual section changed, or the update adds a component the existing vocabulary cannot express.
 
-If it is absent from the available-skills listing, say so plainly, set the direction yourself
-against the calibration below, and flag in the final report that the direction is unreviewed.
+Only if `frontend-design` is absent from the available-skills listing entirely, say so plainly, set
+the direction yourself against `DESIGN-DIRECTION.md`'s calibration, and flag in the final report
+that the direction is unreviewed.
 
-> Not installed? It is `frontend-design` from the `claude-plugins-official` marketplace. Without
-> it, avoid the three looks AI design defaults to regardless of subject: cream background with a
-> high-contrast serif and a terracotta accent; near-black with one acid-green or vermilion accent;
-> broadsheet hairline rules with zero radius and dense columns.
-
-**Layout has defaults too, and they are less discussed than the palette ones.** An application
-mockup tells on itself through spacing long before colour. The signature: rows tall enough that a
-list shows five items where the product shows ten; filters drawn as outlined pill chips with icons;
-a band of large primary buttons duplicating shortcuts the hint bar already states; a detail pane a
-third empty because it holds a title and one field; chrome set at the same size as content so the
-furniture competes with the data. Each is individually defensible, which is why they survive
-review. Together they are the whole difference between "an AI drew an app" and "this is the tool".
-
-The opposite instinct is the one to reach for in professional software: information per pixel, and
-chrome that is unmistakably subordinate to the user's own data. *How* it is made subordinate —
-size, weight, case, colour, face — is `frontend-design`'s call and should differ per product. That
-there is a visible hierarchy between furniture and content is not optional.
-
-It sets direction; it does not write the mockups. The palette, type scale, and component
-vocabulary it returns become `tokens.css` and `app.css` in step 5 — the pipeline still owns every
-file, and no screen is built until the tokens exist.
-
-Bound it with three rules before it starts:
-
-- **Plan values are transcribed verbatim.** Where the plan fixes a hex, a type step, a spacing
-  base, or a radius, that value is law and `frontend-design` does not get a vote on it. Transcribe
-  it into `tokens.css` unchanged, with the plan's section number in a comment.
-- **Additions are marked DERIVED.** Anything the mockups need that the plan never specified — a
-  tint, a skeleton grey, a scrim, a per-category palette — is a proposal, not a fact. Mark it
-  `/* DERIVED */` in `tokens.css` and give it an entry in the gap ledger (step 9).
-- **Density is a constraint, not a preference.** Work out, from the plan, how much has to fit —
-  a virtualized list, a 50-row page, a quick-pick shortcut that numbers nine visible items, a
-  latency target that only makes sense at scale — and give `frontend-design` the number before it
-  starts. A dense professional tool drawn at consumer spacing is wrong the way a wrong hex is
-  wrong, and much harder to notice afterwards.
-
-Feed it a brief distilled from the plan: the product's job, its audience, the platform, the
-brand-personality section if the plan has one, and the verbatim constraints above.
-
-**Done when** `frontend-design` has been invoked and returned — or you have stated why it was
-skipped, naming which of the two exemptions above applies — *and* you can name the palette, the
+**Done when** `frontend-design` has been invoked and returned — or you have stated why it
+was skipped, naming which of the two exemptions above applies — *and* you can name the palette, the
 type scale, the screen and row anatomy, the density figure, and the component vocabulary, marking
 each value as plan-verbatim or DERIVED.
 
@@ -203,8 +148,8 @@ does not get changed.
 
 **Done when** `grep -E '#[0-9a-fA-F]{3,6}' src/app.css src/lib.mjs src/screens.mjs` returns nothing
 but token definitions, and you have looked at a rendered PNG of the busiest screen, stated its
-visible-row count against the step-4 density figure, and made at least one correction to the token
-or component layer as a result.
+visible-row count against the step-4 density figure, and either corrected the token or component
+layer as a result or stated plainly why the render already matches the direction.
 
 ## 6. Write the screens
 
@@ -256,8 +201,8 @@ warns about:
 - **Check a tall reference sheet is not clipped.** `overflow: hidden` on the body means a canvas
   one section too short truncates in silence. Confirm the last section is present in the PNG.
 
-**Done when** you have viewed rendered output, stated the visible-row count, and made at least one
-correction from what you saw.
+**Done when** you have viewed rendered output, stated the visible-row count, and either corrected
+something you saw or stated plainly that the checks above found nothing to fix.
 
 ## 8. Shoot and stamp
 
