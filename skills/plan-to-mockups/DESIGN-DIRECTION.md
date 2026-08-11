@@ -50,7 +50,7 @@ It sets direction; it does not write the mockups. The palette, type scale, and c
 vocabulary it returns become `tokens.css` and `app.css` in step 5 — the pipeline still owns every
 file, and no screen is built until the tokens exist.
 
-Bound it with three rules before it starts:
+Bound it with these rules before it starts:
 
 - **Plan values are transcribed verbatim.** Where the plan fixes a hex, a type step, a spacing
   base, or a radius, that value is law and `frontend-design` does not get a vote on it.
@@ -58,6 +58,11 @@ Bound it with three rules before it starts:
 - **Additions are marked DERIVED.** Anything the mockups need that the plan never specified — a
   tint, a skeleton grey, a scrim, a per-category palette — is a proposal, not a fact. Mark it
   `/* DERIVED */` in `tokens.css` and give it an entry in the gap ledger (step 9).
+- **The palette is designed light-first.** `[data-theme='light']` carries the direction's real
+  intent — it is what the whole matrix renders in bar the handful of dark rows — and dark restates
+  it (step 5). Where the plan's visual section names a dark interface, that is a plan value like any
+  other: transcribe it, and record the polarity in the gap ledger so a reader knows it came from the
+  plan rather than from taste.
 - **Density is a constraint, not a preference.** Work out, from the plan, how much has to fit —
   a virtualized list, a 50-row page, a quick-pick shortcut that numbers nine visible items, a
   latency target that only makes sense at scale — and give it the number before it starts. A dense

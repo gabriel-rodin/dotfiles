@@ -107,7 +107,8 @@ judgement — palette, type pairing, layout concept, the signature element, and 
 not re-derive that judgement yourself; this step exists to borrow it.
 
 Brief it and bound it per [`DESIGN-DIRECTION.md`](DESIGN-DIRECTION.md): what the brief must ask
-for, the three rules that bound it, and the calibration to fall back on in the one case below.
+for, the rules that bound it — light-first among them — and the calibration to fall back on in the
+one case below.
 
 On the **update** branch this step is skipped — the committed direction stands — unless the plan's
 visual section changed, or the update adds a component the existing vocabulary cannot express.
@@ -125,7 +126,8 @@ each value as plan-verbatim or DERIVED.
 
 In this order, because each depends on the last:
 
-1. **`src/tokens.css`** — the only place a colour, spacing, or radius value is defined. Both themes.
+1. **`src/tokens.css`** — the only place a colour, spacing, or radius value is defined. Both themes,
+   light-first.
    Nothing downstream may write a literal hex or pixel gap; if a screen needs one, it is a missing
    token.
 2. **`src/app.css`** — the component classes **step 4's direction actually named**, and no others.
@@ -155,8 +157,9 @@ does not get changed.
 
 **Done when** `grep -E '#[0-9a-fA-F]{3,6}' src/app.css src/lib.mjs src/screens.mjs` returns nothing
 but token definitions, and you have looked at a rendered PNG of the busiest screen, stated its
-visible-row count against the step-4 density figure, and either corrected the token or component
-layer as a result or stated plainly why the render already matches the direction.
+visible-row count against the step-4 density figure and whether its canvas is light or a dark the
+plan asked for by section number, and either corrected the token or component layer as a result or
+stated plainly why the render already matches the direction.
 
 ## 6. Write the screens
 
