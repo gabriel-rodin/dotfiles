@@ -2,7 +2,7 @@
 
 Create or reconcile exactly one standalone issue for the whole plan. Do not create sub-issues, hierarchy links, or generated comments.
 
-Use the normal parent marker as the issue identity. Apply only an existing type label; do not add priority or `sub-issue` labels.
+Use the normal parent marker as the issue identity. Apply at most one matching native issue type; do not substitute a type-like label. Add a label only when the plan explicitly requires it or the repository uses that exact label consistently for equivalent work. Do not add priority or `sub-issue` labels.
 
 Use this body shape:
 
