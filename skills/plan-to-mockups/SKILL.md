@@ -68,6 +68,13 @@ plan's catalogue is either rendered or listed under "not mocked, and why".
 
 ## 3. Survey `mockups/` — pick the branch
 
+Only a directory literally named `mockups/` counts as existing work. A repo may have
+`mockups_v1/`, `mockups-archive/`, or other past iterations sitting alongside it — **do not open,
+read, or otherwise use these as a reference.** Step 4's direction must come from the plan and
+`frontend-design`'s independent judgment; basing it on a prior attempt (even unconsciously, by
+having looked at its palette or layout first) defeats the reason that step exists and makes the
+result unverifiable as this run's own judgment.
+
 **No `mockups/` directory** → scratch. Scaffold the pipeline per
 [`PIPELINE.md`](PIPELINE.md), then continue.
 
