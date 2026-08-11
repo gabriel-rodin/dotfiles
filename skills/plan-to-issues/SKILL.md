@@ -1,6 +1,8 @@
 ---
 name: plan-to-issues
 description: Convert a completed plan into right-sized GitHub issues without implementing it. Use when explicitly asked to create or reconcile GitHub issues from a repository-relative plan file path or plan text, either as one standalone issue or as phased parent and sub-issues.
+disable-model-invocation: true
+argument-hint: "[relative-plan-file-path]"
 ---
 
 # Plan to Issues
