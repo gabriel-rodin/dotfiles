@@ -80,7 +80,7 @@ const section = (g) => {
     ${items
       .map(
         (s) => `<figure>
-      <a href="${s.id}.png"><img src="${s.id}.png" alt="${esc(s.title)}" loading="lazy"></a>
+      <a href="${s.id}.png" class="thumb" data-lightbox="${s.id}.png" data-alt="${esc(s.title)}"><img src="${s.id}.png" alt="${esc(s.title)}" loading="lazy"></a>
       <figcaption>
         <span class="tag">${esc(s.screen)}</span>
         <b>${esc(s.title)}</b>
@@ -116,6 +116,11 @@ const index = `<!doctype html>
   .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-base);font-weight:700}
   .file{display:block;color:var(--text-tertiary);font-size:11px;margin-top:2px}
   figcaption p{color:var(--text-secondary);margin:8px 0 0}
+  dialog#lightbox{border:0;padding:0;background:transparent;max-width:96vw;max-height:96vh}
+  dialog#lightbox::backdrop{background:rgba(0,0,0,.72)}
+  dialog#lightbox img{display:block;max-width:96vw;max-height:96vh;border-radius:8px}
+  dialog#lightbox button{position:fixed;top:20px;right:28px;width:40px;height:40px;border-radius:50%;
+    border:0;background:rgba(0,0,0,.55);color:#fff;font-size:20px;line-height:1;cursor:pointer}
 </style>
 <body data-theme="light">
 <div class="wrap">
@@ -126,6 +131,27 @@ const index = `<!doctype html>
   </div>
   ${groups.map(section).join('')}
 </div>
+<dialog id="lightbox">
+  <button type="button" aria-label="Close" data-close>&times;</button>
+  <img alt="">
+</dialog>
+<script>
+  // Click a thumbnail to view it full-size in-page instead of navigating to the PNG —
+  // no back button needed to return to the contact sheet. The <a href> stays as a
+  // plain-link fallback if JS is unavailable.
+  const lb = document.getElementById('lightbox');
+  const lbImg = lb.querySelector('img');
+  document.querySelectorAll('a.thumb').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      lbImg.src = a.dataset.lightbox;
+      lbImg.alt = a.dataset.alt;
+      lb.showModal();
+    });
+  });
+  lb.querySelector('[data-close]').addEventListener('click', () => lb.close());
+  lb.addEventListener('click', (e) => { if (e.target === lb) lb.close(); });
+</script>
 `;
 writeFileSync(resolve(here, '..', 'index.html'), index);
 

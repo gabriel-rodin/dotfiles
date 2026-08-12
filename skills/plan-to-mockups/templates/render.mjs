@@ -9,7 +9,11 @@ export function page(s) {
 <title>${s.title}</title>
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="../app.css">
-<style>html,body{width:${s.w}px;height:${s.h}px;overflow:hidden}</style>
+<!-- min-height + scroll, not a hard height+overflow:hidden: shoot.sh screenshots only the
+     --window-size viewport, so this never changes the PNG, but it lets content taller than s.h
+     scroll into view when the file is opened directly — a clipped tall sheet (00-design-system,
+     e.g.) is then visible and scrollable instead of silently cut off with no way to see the rest. -->
+<style>html,body{width:${s.w}px;min-height:${s.h}px;overflow-y:auto;overflow-x:hidden}</style>
 <body data-theme="${s.theme}">
 ${s.frame ? `<div class="${s.frame}">${s.html}</div>` : s.html}
 `;

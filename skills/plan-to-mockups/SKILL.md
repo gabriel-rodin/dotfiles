@@ -99,25 +99,45 @@ you intend to touch.
 
 ## 4. Set the design direction
 
-**Call the Skill tool on `frontend-design`** — it ships as a plugin, so the plugin-qualified name
-is what the Skill tool resolves; the bare `frontend-design` works only if it is installed as a
-plain skill. Check the available-skills listing for which form is present. This call is mandatory:
-skipping it is precisely why an AI-generated mockup reads as AI-generated. It owns aesthetic
-judgement — palette, type pairing, layout concept, the signature element, and interface copy. Do
-not re-derive that judgement yourself; this step exists to borrow it.
+**Dispatch this step to a fresh subagent — never call `frontend-design` inline in this
+conversation.** `Skill(frontend-design)` only loads instructions into whatever context calls it; it
+does not isolate that context from anything already in it. If this conversation has, at any point,
+opened, described, or discussed `mockups_v1`, `mockups_v2`, an `archives/` directory, or any other
+past attempt at this product's mockups — including a user just having shown you one and asked what
+you think — that exposure is already in context and cannot be un-seen by an instruction that says
+not to reference it. Step 3's "do not open, read, or otherwise use these as a reference" rule is
+necessary but not sufficient once that has happened. The only structural fix is running the
+direction-setting call somewhere that never saw it: spawn it with the Agent tool (a fresh agent has
+no memory of the parent conversation by construction) instead of invoking the Skill tool directly
+here.
 
-Brief it and bound it per [`DESIGN-DIRECTION.md`](DESIGN-DIRECTION.md): what the brief must ask
-for, the rules that bound it — light-first among them — and the calibration to fall back on in the
-one case below.
+Write the agent's prompt as a **fully self-contained brief** per [`DESIGN-DIRECTION.md`](DESIGN-DIRECTION.md)
+— the product's job, audience, platform, the brand-personality section if the plan has one, and the
+verbatim constraints (light-first among them). Do not summarize this conversation into the prompt or
+mention that other mockup attempts exist; the subagent should not know they exist, let alone what
+they looked like. Instruct it explicitly to:
+
+1. Call the Skill tool on `frontend-design` itself (plugin-qualified name if it ships as a plugin;
+   check the available-skills listing for which form is present) and follow its brainstorm →
+   critique → revise process.
+2. Return, as its final answer, the compact design plan only: the palette as 4–6 named hex values
+   per theme, the type pairing, the screen/row anatomy, the density figure, the signature element,
+   and the component vocabulary. It does not touch any file — the pipeline still owns every file
+   (step 5), so nothing it produces is transcribed until you write it into `tokens.css`/`app.css`
+   yourself.
+
+This call is mandatory: skipping it is precisely why an AI-generated mockup reads as AI-generated,
+and running it inline defeats the reason it exists just as skipping it would.
 
 On the **update** branch this step is skipped — the committed direction stands — unless the plan's
 visual section changed, or the update adds a component the existing vocabulary cannot express.
 
 Only if `frontend-design` is absent from the available-skills listing entirely, say so plainly, set
 the direction yourself against `DESIGN-DIRECTION.md`'s calibration, and flag in the final report
-that the direction is unreviewed.
+that the direction is unreviewed. (This exemption can be checked from here, before spawning
+anything — no need to isolate a step you are about to do yourself.)
 
-**Done when** `frontend-design` has been invoked and returned — or you have stated why it
+**Done when** the subagent has been dispatched and returned — or you have stated why it
 was skipped, naming which of the two exemptions above applies — *and* you can name the palette, the
 type scale, the screen and row anatomy, the density figure, and the component vocabulary, marking
 each value as plan-verbatim or DERIVED.
@@ -140,6 +160,17 @@ application kit, and writing it out in advance is how a mockup acquires pill chi
 and a footer of buttons that repeat the keyboard hints below them. If a component is not in the
 direction and no matrix row requires it, it does not get a class. If a matrix row turns out to need
 one the direction never anticipated, that is a finding — add it, and say so in the gap ledger.
+
+**Give inherently mid-motion elements a live-idle animation.** A text cursor, a spinner, a
+"recording"/"listening" dot, a progress bar mid-fill — anything whose real-world rest state is
+*moving* reads as broken (or just static-looking) when frozen, and undersells the screen the moment
+someone opens the live HTML rather than the shot PNG. Where step 4's direction includes such an
+element, give it a small `@keyframes` rule in `app.css` (a blinking caret, a pulsing dot) scoped
+narrowly to that one component — this is a plausibility detail for the step 7 review and anyone
+opening `src/out/*.html` directly, not a feature to chase for its own sake. It never survives to the
+committed PNG (`shoot.sh` captures a single frame), so do not spend more than one `@keyframes` block
+per element, and do not add motion to anything that is not genuinely in motion at rest in the real
+product.
 
 Anything appearing on two screens is a `lib.mjs` export, not copied markup. This is what makes a
 component change a one-line edit instead of a forty-file sweep.
@@ -208,8 +239,11 @@ warns about:
   they exist in the mono stack and often not in the sans. Use words, or verify in the PNG.
 - **Check that real content wraps.** Anything holding a path, URL, log line or code needs
   `overflow-wrap: anywhere`, or a long line runs under the pane edge where only a render shows it.
-- **Check a tall reference sheet is not clipped.** `overflow: hidden` on the body means a canvas
-  one section too short truncates in silence. Confirm the last section is present in the PNG.
+- **Check a tall reference sheet is not clipped.** A canvas one section too short truncates the PNG
+  silently. Open the live `src/out/<id>.html` directly and scroll — the page allows scrolling past
+  its declared height precisely so this is visible, instead of hiding the overflow with
+  `overflow: hidden`. If it scrolls, the declared `h` in `screens.mjs` is too small; grow it to match
+  and re-render.
 
 **Done when** you have viewed rendered output, stated the visible-row count, and either corrected
 something you saw or stated plainly that the checks above found nothing to fix.

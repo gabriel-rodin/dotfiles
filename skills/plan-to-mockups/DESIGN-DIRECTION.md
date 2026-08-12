@@ -25,6 +25,15 @@ must name:
   A state that reads the same on 95% of rows is wallpaper, however important the fact is; put that
   one in a badge on the exceptions and give the slot to something with more entropy.
 
+## The reference sheet is a designed page, not a stacked spec doc
+
+The `00-design-system` row (and `sheet.mjs` generally) is graded by the same eye as every other
+screen — it is not exempt just because its content is reference material. Give its sections one
+shared container treatment (consistent padding, radius, and gap on the canvas) and apply it
+uniformly across the whole sheet, not just the palette swatches at the top. A sheet that starts in
+cards and finishes as bare headers over full-bleed tables reads as unfinished, however accurate the
+later tables are — the container is what turns a list of facts into a page with rhythm.
+
 ## Calibration, if `frontend-design` is not installed
 
 Avoid the three looks AI design defaults to regardless of subject: cream background with a
@@ -70,4 +79,7 @@ Bound it with these rules before it starts:
   harder to notice afterwards.
 
 Feed it a brief distilled from the plan: the product's job, its audience, the platform, the
-brand-personality section if the plan has one, and the verbatim constraints above.
+brand-personality section if the plan has one, and the verbatim constraints above. This brief is the
+*entire* prompt for the subagent SKILL.md step 4 spawns to make this call — nothing else from the
+calling conversation should reach it, since that is the only thing making its judgment independent
+of anything (old drafts, prior taste calls) already discussed in this session.
