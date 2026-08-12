@@ -1,5 +1,5 @@
 /* Design tokens — the only place a colour, spacing, or radius value is defined.
-   Semantic values are transcribed verbatim from the implementation plan §N.
+   Use explicit values from the implementation plan when it provides them.
    Values marked DERIVED are additions made for the mockups; see assumptions.md. */
 
 :root,
@@ -45,7 +45,7 @@
 }
 
 :root {
-  /* Spacing — N pt base */
+  /* Spacing — use the plan's base unit */
   --sp-xs: ;
   --sp-sm: ;
   --sp-md: ;

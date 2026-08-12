@@ -1,297 +1,79 @@
 ---
 name: plan-to-mockups
 description: >-
-  Turn an implementation plan into a committed set of high-fidelity screen
-  mockups — rendered from HTML by a token-driven pipeline, not drawn — with a
-  staleness gate, a contact sheet, and a gap ledger.
+  Convert a user-supplied relative Markdown plan, usually under plans/*.md, into high-fidelity
+  UI mockups in mockups/ using the frontend-design skill. Use when the user gives a plan path and
+  wants rendered HTML and PNG mockups for the screens and states in that plan.
 disable-model-invocation: true
 argument-hint: "[plan-file]"
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent
 ---
 
-Mockups are **rendered, not drawn**. Every screen is HTML built from one token file and one
-component stylesheet, shot to PNG by headless Chrome, and **stamped** with a content hash so a
-forgotten re-render fails loudly instead of shipping a stale reference. Hand-editing a PNG
-accomplishes nothing; changing a token re-renders every screen consistently.
-
-The unit of work is the **matrix** — one row per screen × state, not per screen. A plan that names
-twelve screens yields forty-odd mockups, because empty, loading, error, dialog, dark, and
-large-text are each their own row.
-
-Two branches: **scratch** (no `mockups/` yet) and **update** (one exists). Step 3 picks.
-
-## 1. Locate and read the plan
-
-Take the argument path if given. Otherwise glob, in order: `plan.md`, `PLAN.md`, `plans/*.md`,
-`docs/plan.md`. More than one candidate → ask which.
-
-Read it **whole**, top to bottom. Grepping for "screen" finds the screen list and misses the visual
-system, the error catalogue, the accessibility floor, and the domain vocabulary that makes sample
-content realistic — all of which the mockups must honour.
-
-Note the section numbers for: visual design system, screen specifications, navigation map, error
-catalogue, accessibility. You will cite them by number in `tokens.css` and `assumptions.md`, so the
-next reader can check a value against its source.
-
-**Done when** you can name, from the plan alone: the product's one-sentence job, its target
-platform and viewport, every screen, and every error state.
-
-## 2. Build the matrix
-
-Write the matrix out — as a table, in your response — *before* any code. Columns:
-
-| id | group | plan ref | title | theme | viewport | note |
-
-- **id** — `NN-kebab-name`, numbered in **flow order**, not spec order. The number is the contact
-  sheet's ordering and the PNG's filename.
-- **group** — the contact-sheet section: a flow, not a screen (`Launch`, `Active workout`,
-  `Errors`, `Dark theme`, `Accessibility`).
-- **plan ref** — the plan's own screen ID (`S5`) or error code (`E-06`). Rendered as the caption
-  tag, so a reviewer can jump from PNG to spec.
-- **note** — one sentence on *why this screen looks the way it does*. Not a description of what is
-  visible; the PNG already says that.
-
-Derive rows exhaustively. For each screen spec in the plan, one row per state it names or implies:
-
-- default (populated) · empty · loading/skeleton · error · validation-failure
-- each modal, bottom sheet, dropdown, and confirmation dialog it can open
-- a selected/hover/focus variant wherever a control's state is not obvious at rest
-- desktop **and** mobile widths, if the plan targets both
-- a dark-theme row for each *primary* screen (not all of them — 3–5 is the right dose)
-- one accessibility row at the largest supported text size, on the densest screen
-
-Add a `00-design-system` row: the token reference sheet. It is a mockup of the system itself.
-
-**Done when** every screen section in the plan maps to at least one row, every state word in every
-spec (`Empty:`, `Loading:`, `Error:`, `Validation:`) has its own row, and every error code in the
-plan's catalogue is either rendered or listed under "not mocked, and why".
-
-## 3. Survey `mockups/` — pick the branch
-
-Only a directory literally named `mockups/` counts as existing work. A repo may have
-`mockups_v1/`, `mockups-archive/`, or other past iterations sitting alongside it — **do not open,
-read, or otherwise use these as a reference.** Step 4's direction must come from the plan and
-`frontend-design`'s independent judgment; basing it on a prior attempt (even unconsciously, by
-having looked at its palette or layout first) defeats the reason that step exists and makes the
-result unverifiable as this run's own judgment.
-
-**No `mockups/` directory** → scratch. Scaffold the pipeline per
-[`PIPELINE.md`](PIPELINE.md), then continue.
-
-**A `mockups/` directory exists** → update. Read `src/screens.mjs`, `src/tokens.css`, and
-`assumptions.md` first, then obey these rules, which exist because the artifacts are generated and
-cross-referenced:
-
-- **Never hand-edit a PNG, `index.html`, or `render-stamp.json`.** All three are outputs.
-- **Never renumber an existing id.** Plan sections, issues, and other docs link to
-  `09-logger.png` by name. A screen that belongs between `06` and `07` becomes `06a-…`. That is
-  why the numbering has gaps and letters.
-- Route each change to its narrowest source: a colour or spacing value → `tokens.css`; how a
-  component looks → `app.css` (style) or `lib.mjs` (markup); one screen's content →
-  its entry in `screens.mjs`.
-- Keep the existing direction — an update inherits the committed palette, type scale, and
-  component vocabulary. Step 4 says when that reopens.
-- Reconcile the matrix against `screens.mjs`: rows you added, rows now obsolete, ids unchanged.
-  State the diff before writing.
-
-**Done when** you have stated which branch you are on and, on update, listed exactly which files
-you intend to touch.
-
-## 4. Set the design direction
-
-**Dispatch this step to a fresh subagent — never call `frontend-design` inline in this
-conversation.** `Skill(frontend-design)` only loads instructions into whatever context calls it; it
-does not isolate that context from anything already in it. If this conversation has, at any point,
-opened, described, or discussed `mockups_v1`, `mockups_v2`, an `archives/` directory, or any other
-past attempt at this product's mockups — including a user just having shown you one and asked what
-you think — that exposure is already in context and cannot be un-seen by an instruction that says
-not to reference it. Step 3's "do not open, read, or otherwise use these as a reference" rule is
-necessary but not sufficient once that has happened. The only structural fix is running the
-direction-setting call somewhere that never saw it: spawn it with the Agent tool (a fresh agent has
-no memory of the parent conversation by construction) instead of invoking the Skill tool directly
-here.
-
-Write the agent's prompt as a **fully self-contained brief** per [`DESIGN-DIRECTION.md`](DESIGN-DIRECTION.md)
-— the product's job, audience, platform, the brand-personality section if the plan has one, and the
-verbatim constraints (light-first among them). Do not summarize this conversation into the prompt or
-mention that other mockup attempts exist; the subagent should not know they exist, let alone what
-they looked like. Instruct it explicitly to:
-
-1. Call the Skill tool on `frontend-design` itself (plugin-qualified name if it ships as a plugin;
-   check the available-skills listing for which form is present) and follow its brainstorm →
-   critique → revise process.
-2. Return, as its final answer, the compact design plan only: the palette as 4–6 named hex values
-   per theme, the type pairing, the screen/row anatomy, the density figure, the signature element,
-   and the component vocabulary. It does not touch any file — the pipeline still owns every file
-   (step 5), so nothing it produces is transcribed until you write it into `tokens.css`/`app.css`
-   yourself.
-
-This call is mandatory: skipping it is precisely why an AI-generated mockup reads as AI-generated,
-and running it inline defeats the reason it exists just as skipping it would.
-
-On the **update** branch this step is skipped — the committed direction stands — unless the plan's
-visual section changed, or the update adds a component the existing vocabulary cannot express.
-
-Only if `frontend-design` is absent from the available-skills listing entirely, say so plainly, set
-the direction yourself against `DESIGN-DIRECTION.md`'s calibration, and flag in the final report
-that the direction is unreviewed. (This exemption can be checked from here, before spawning
-anything — no need to isolate a step you are about to do yourself.)
-
-**Done when** the subagent has been dispatched and returned — or you have stated why it
-was skipped, naming which of the two exemptions above applies — *and* you can name the palette, the
-type scale, the screen and row anatomy, the density figure, and the component vocabulary, marking
-each value as plan-verbatim or DERIVED.
-
-## 5. Write the token and component layer
-
-In this order, because each depends on the last:
-
-1. **`src/tokens.css`** — the only place a colour, spacing, or radius value is defined. Both themes,
-   light-first.
-   Nothing downstream may write a literal hex or pixel gap; if a screen needs one, it is a missing
-   token.
-2. **`src/app.css`** — the component classes **step 4's direction actually named**, and no others.
-3. **`src/lib.mjs`** — the icon set plus every shared markup helper, exported as functions: the
-   window or screen chrome this product has, the repeated row and card types, and the overlays.
-
-**Build the vocabulary the direction found, not a standard kit.** There is deliberately no
-checklist here. "Cards, buttons, inputs, chips, sheets, tabs, status bar, nav bar" is the generic
-application kit, and writing it out in advance is how a mockup acquires pill chips it did not need
-and a footer of buttons that repeat the keyboard hints below them. If a component is not in the
-direction and no matrix row requires it, it does not get a class. If a matrix row turns out to need
-one the direction never anticipated, that is a finding — add it, and say so in the gap ledger.
-
-**Give inherently mid-motion elements a live-idle animation.** A text cursor, a spinner, a
-"recording"/"listening" dot, a progress bar mid-fill — anything whose real-world rest state is
-*moving* reads as broken (or just static-looking) when frozen, and undersells the screen the moment
-someone opens the live HTML rather than the shot PNG. Where step 4's direction includes such an
-element, give it a small `@keyframes` rule in `app.css` (a blinking caret, a pulsing dot) scoped
-narrowly to that one component — this is a plausibility detail for the step 7 review and anyone
-opening `src/out/*.html` directly, not a feature to chase for its own sake. It never survives to the
-committed PNG (`shoot.sh` captures a single frame), so do not spend more than one `@keyframes` block
-per element, and do not add motion to anything that is not genuinely in motion at rest in the real
-product.
-
-Anything appearing on two screens is a `lib.mjs` export, not copied markup. This is what makes a
-component change a one-line edit instead of a forty-file sweep.
-
-**Then prove the direction on one screen before writing the other forty.** Build the single
-densest, most content-bearing screen in the matrix — the one the product lives or dies on — render
-it to PNG, and open it with the Read tool. Judge it as a designer, against step 4's calibration and
-step 7's checks: count the rows, find the dead bands, compare chrome type to content type. Fix the
-direction, not the screen, and look again.
-
-This gate is the difference between one screen done well and forty done adequately. A direction
-that is only ever evaluated in the abstract, and is then mass-produced across a whole matrix,
-regresses to the defaults every time — and by then the cost of changing it is forty screens, so it
-does not get changed.
-
-**Done when** `grep -E '#[0-9a-fA-F]{3,6}' src/app.css src/lib.mjs src/screens.mjs` returns nothing
-but token definitions, and you have looked at a rendered PNG of the busiest screen, stated its
-visible-row count against the step-4 density figure and whether its canvas is light or a dark the
-plan asked for by section number, and either corrected the token or component layer as a result or
-stated plainly why the render already matches the direction.
-
-## 6. Write the screens
-
-`src/screens.mjs`: sample-data constants at the top, then one `add({…})` per matrix row in flow
-order.
-
-**Realistic content is a hard requirement.** Sample data comes from the plan's own domain — real
-exercise names, plausible weights, a note someone would actually type. Lorem ipsum, `Item 1`,
-`John Doe`, and `Lorem` are failures. Numbers must be internally consistent: if a summary says
-three sets, three rows exist and their volume adds up.
-
-Compose states from the *same* data. The empty state and the populated state are the same screen
-with the list emptied, not two unrelated designs.
-
-**Done when** every matrix row has an entry and `node src/build.mjs` reports the expected count.
-
-## 7. Build, look, critique
-
-```bash
-cd mockups
-node src/build.mjs        # fast, no browser — preview src/out/<id>.html
-```
-
-Then **look at the output**, do not assume it. Render a representative sample to PNG and open them
-with the Read tool — the image comes back visually. Pick at least: the densest screen, one empty
-state, one dialog, one dark row.
-
-Critique what you see against the plan, not against your intent: tap targets below the floor, text
-that overflows its container, a skeleton that does not match the layout it stands in for, a dialog
-whose scrim does not read, contrast that fails in dark. Fix in the source, rebuild, look again.
-
-Then run these, which are checkable rather than a matter of taste, and which catch the drift step 4
-warns about:
-
-- **Count the visible rows** on the densest list screen and say the number. Compare it to step 4's
-  density figure. Five where the plan's quick-pick binds nine is a failed screen, not a tight one.
-  Row height is almost always the cause, and almost always a line of metadata that could be folded
-  into another line or dropped.
-- **Find the dead bands.** Every horizontal band must earn its height. A footer of large buttons
-  repeating the hint bar, a detail pane a third empty, a header holding only a title — each is
-  height the list should have had. A sparse pane usually wants more of what the plan already knows
-  about the thing on screen — provenance, size, state, counts — not more padding.
-- **Compare chrome type against content type** in the render. If they are the same size, the
-  furniture is competing with the user's data. Chrome should read as smaller and quieter.
-- **Check glyph coverage.** `␣`, `⎋` and similar render as empty boxes in most UI font stacks —
-  they exist in the mono stack and often not in the sans. Use words, or verify in the PNG.
-- **Check that real content wraps.** Anything holding a path, URL, log line or code needs
-  `overflow-wrap: anywhere`, or a long line runs under the pane edge where only a render shows it.
-- **Check a tall reference sheet is not clipped.** A canvas one section too short truncates the PNG
-  silently. Open the live `src/out/<id>.html` directly and scroll — the page allows scrolling past
-  its declared height precisely so this is visible, instead of hiding the overflow with
-  `overflow: hidden`. If it scrolls, the declared `h` in `screens.mjs` is too small; grow it to match
-  and re-render.
-
-**Done when** you have viewed rendered output, stated the visible-row count, and either corrected
-something you saw or stated plainly that the checks above found nothing to fix.
-
-## 8. Shoot and stamp
-
-```bash
-bash src/shoot.sh         # builds, then renders every screen @2x, then stamps
-node src/check.mjs        # must print ✓
-```
-
-`shoot.sh` builds first, so it can never render stale HTML, and it writes `render-stamp.json` only
-after **every** screen succeeds — a partial run cannot claim to be current.
-
-**Done when** `check.mjs` exits zero.
-
-## 9. Write the three companion documents
-
-`index.html` links these; they are part of the deliverable, not optional extras.
-
-- **`design-system.md`** — colour, type, spacing, elevation, every component, the icon set, and the
-  accessibility floor. Reference material a developer reads while building, with token names.
-- **`user-flow.md`** — the navigation model, each primary journey as an ordered walk naming the
-  screen ids it passes through, the failure paths, and the design decisions worth defending.
-- **`assumptions.md`** — the **gap ledger**, and the most valuable of the three. One numbered entry
-  per decision the plan did not make, each stating: the **gap** (what the plan leaves open, with
-  its section number), what was **assumed**, and the **consequence** if the assumption is wrong.
-  Follow it with two sections: surfaces the plan specifies but the mockups deliberately do not
-  render, and questions still open.
-
-Every `/* DERIVED */` token has a ledger entry. So does every place a mockup departs from the plan.
-
-**Done when** a reader who has the plan but not this conversation can tell which mockup decisions
-are binding and which are proposals.
-
-## 10. Close the loop
-
-Write `mockups/README.md`: how to look at them, how to regenerate, what is committed and why, and
-the screen table. [`PIPELINE.md`](PIPELINE.md) specifies its contents.
-
-Then report, in your response:
-
-- the matrix as built, with counts per group
-- which ledger entries need the user's decision, phrased as answerable questions
-- the exact commands to review locally
-
-Offer — do not perform unasked — to link the mockups back into the plan, adding a *Rendered:*
-line to each screen spec naming its PNGs. That edits a file outside `mockups/`, so it needs a yes.
-
-**Done when** `node src/check.mjs` passes, `git status` shows changes confined to `mockups/`, and
-the open questions are stated as questions.
+# Plan to mockups
+
+Turn one implementation plan into a small, reviewable set of rendered mockups. Treat the plan as
+product truth and `frontend-design` as the design lead.
+
+## Input
+
+Use the supplied path exactly as a path relative to the repository root, for example:
+`plans/clipboard-history.md`.
+
+- Require one Markdown plan path; do not glob for another plan or silently choose among candidates.
+- Read the entire file before designing.
+- If the path is missing, absolute, outside the repository, or does not exist, stop and ask for a
+  corrected relative path.
+
+## Workflow
+
+1. Extract the brief from the plan: product job, audience, target platform and viewports, named
+   screens, journeys, explicit states and interactions, content vocabulary, and visual or
+   accessibility constraints. Explicit plan values override derived design choices.
+
+2. Invoke `frontend-design` before writing the mockups. Give it the extracted brief and the plan's
+   constraints. Follow its brainstorm → critique → revise process and use the resulting direction
+   for the palette, typography, layout, component vocabulary, and signature element. Keep the
+   direction specific to the product; do not fill gaps with a generic dashboard or marketing-page
+   kit.
+
+   **Design light mode first.** Treat light mode as the canonical base for palette, typography,
+   layout, components, and every required screen/state. Complete and review the light-mode set
+   before creating any dark-mode variants. Dark mode is a secondary token pass derived from the
+   approved light system, never the default starting point or a substitute for required light
+   screens. This ordering still applies when the plan ultimately requires dark mode or the final
+   product defaults to the system theme.
+
+3. Build the mockups in `mockups/`.
+
+   - If `mockups/` does not exist, scaffold it from this skill's `templates/` files. Create the
+     project-specific `tokens.css`, `app.css`, `lib.mjs`, and `screens.mjs` needed by the renderer.
+   - If it exists, read its source files first and extend the current direction. Preserve existing
+     screen IDs unless the plan clearly removes a screen.
+   - Create one screen entry for each named screen and each state the plan explicitly describes or
+     that is necessary to make its flow understandable. Do not manufacture an exhaustive state
+     matrix.
+   - Keep every required screen entry light-themed in the initial set. Add dark variants only after
+     that light set is complete and reviewed. Give each dark entry a distinct ID and set
+     `variantOf` to the earlier canonical light screen's ID; the renderer rejects a dark entry
+     without that earlier light counterpart.
+   - Use realistic, plan-specific content. Reuse shared markup helpers for repeated UI, keep
+     design values in tokens, and mark unavoidable assumptions briefly in `mockups/assumptions.md`.
+   - Keep changes inside `mockups/` unless the user explicitly asks for another file to change.
+     Never hand-edit generated PNGs, `index.html`, or `render-stamp.json`.
+
+4. Build and review the result from `mockups/`:
+
+   ```bash
+   node src/build.mjs
+   bash src/shoot.sh
+   node src/check.mjs
+   ```
+
+   Inspect the generated contact sheet and at least one representative PNG, checking that the
+   plan's screens are present, content is readable, text does not overflow, target viewports work,
+   focus/contrast are usable, and the visual direction is distinctive rather than default. Fix
+   source files and rerun the commands when the render exposes a problem.
+
+Leave the rendered PNGs, contact sheet, source files, and successful render stamp in `mockups/`.
+Report the supplied plan path, the screens rendered, and any unresolved assumption or rendering
+blocker.

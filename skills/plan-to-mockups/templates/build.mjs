@@ -15,17 +15,38 @@ const outDir = resolve(here, 'out');
 const esc = (v) =>
   String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
-rmSync(outDir, { recursive: true, force: true });
-mkdirSync(outDir, { recursive: true });
-
-// A repeated id would silently overwrite the earlier screen's HTML and PNG with no error.
+// IDs become HTML and PNG filenames. Keep them as simple slugs so generated
+// screens cannot write outside the mockups output directories.
 const seenIds = new Set();
 for (const s of screens) {
+  if (typeof s.id !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s.id)) {
+    console.error(`Invalid screen id "${s.id}" — use lowercase letters, numbers, and hyphens.`);
+    process.exit(1);
+  }
   if (seenIds.has(s.id)) {
     console.error(`Duplicate screen id "${s.id}" — ids must be unique.`);
     process.exit(1);
   }
   seenIds.add(s.id);
+}
+
+rmSync(outDir, { recursive: true, force: true });
+mkdirSync(outDir, { recursive: true });
+
+// Light is the canonical design pass. A dark screen may only derive from an earlier
+// light screen, so dark mode cannot silently replace a required light-mode state.
+const screenById = new Map();
+for (const s of screens) {
+  if (s.theme === 'dark') {
+    const base = screenById.get(s.variantOf);
+    if (!s.variantOf || !base || base.theme !== 'light') {
+      console.error(
+        `Dark screen "${s.id}" must set variantOf to an earlier light screen id.`,
+      );
+      process.exit(1);
+    }
+  }
+  screenById.set(s.id, s);
 }
 
 const tokensCss = readFileSync(resolve(here, 'tokens.css'), 'utf8');
@@ -55,7 +76,8 @@ const block = (css, selector) => {
 const tokenNames = (css) => new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
 const lightNames = tokenNames(block(tokensCss, /\[data-theme=['"]light['"]\]\s*\{/));
 const darkNames = tokenNames(block(tokensCss, /\[data-theme=['"]dark['"]\]\s*\{/));
-const missingDark = [...lightNames].filter((n) => !darkNames.has(n));
+const hasDarkScreens = screens.some((s) => s.theme === 'dark');
+const missingDark = hasDarkScreens ? [...lightNames].filter((n) => !darkNames.has(n)) : [];
 if (missingDark.length) {
   console.error(
     `[data-theme='dark'] is missing ${missingDark.length} token(s) declared for light:\n  ${missingDark.join('\n  ')}\n\n`

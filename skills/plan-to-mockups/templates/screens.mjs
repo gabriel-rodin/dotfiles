@@ -13,14 +13,18 @@ export const meta = {
   subtitle:
     'N screens covering every screen, state, and recovery path in the implementation plan. '
     + 'Rendered at 390 × 844 @2x. Screen IDs and error codes match the plan.',
-  docs: ['design-system.md', 'user-flow.md', 'assumptions.md'],
+  // Add only documents that exist in mockups/.
+  docs: [],
 };
 
 const S = [];
-// Set w/h/frame from step 4's direction, not from habit. `frame` is a wrapper class
+// Set w/h/frame from the chosen design direction, not from habit. `frame` is a wrapper class
 // name and is opt-in — add `frame: 'phone'` here only if this product is a phone app,
 // and omit it for desktop windows and reference sheets. Set the default viewport to
-// this product's target (see PIPELINE.md § Viewports); 390 × 844 is the phone one.
+// this product's target from the plan; 390 × 844 is the phone example.
+// Light is the canonical first pass. Keep every required screen light until the complete
+// light set has been built and reviewed. Add dark variants afterward with distinct ids and
+// `variantOf: '<earlier-light-screen-id>'`; build.mjs rejects dark-only screen entries.
 const add = (s) => S.push({ w: 390, h: 844, theme: 'light', ...s });
 
 /* ─── sample data ──────────────────────────────────────────────────
