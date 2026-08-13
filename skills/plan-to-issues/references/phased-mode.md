@@ -8,11 +8,11 @@ Build the complete parent map before surveying or creating issues:
 
 1. Identify explicit task-bearing phases.
 2. Identify delivery partitions only when the plan makes their membership or sequencing authoritative.
-3. Assign every actionable task or explicitly split task scope to exactly one parent unit.
+3. Assign every actionable task or explicitly split task scope to exactly one parent unit. A parenthetical beside a task ID in a membership table usually marks a scope *boundary* on one deliverable — `(Part A surfaces)`, `(macOS + Windows targets)` — rather than a second deliverable. Treat it as a split only when another partition's membership lists that same task ID; when the deferred remainder is assigned to a different task ID instead, the parenthetical is a boundary to state in the body and the task has exactly one scope.
 4. Order partitioned parent units by delivery partition, then by phase order. Keep unpartitioned phases in plan order.
 5. Stop when a task scope is missing, assigned twice, or conflicts with an authoritative gate. Do not silently choose between contradictory memberships.
 
-If one task ID has separately deliverable scopes in different partitions, keep the task ID visible in both issues and use the partition/phase parent to distinguish them. If multiple scopes land in the same parent, assign concise stable scope IDs for item-key derivation. A selector naming a partition selects all of its parent units; a selector naming a phase that has multiple partition slices is ambiguous unless the user names the exact partition/phase slice.
+When one task ID has separately deliverable scopes in different partitions, keep the task ID visible in both issues and state each issue's scope boundary in its body. `SKILL.md`'s tiebreaker rule governs their keys. A selector naming a partition selects all of its parent units; a selector naming a phase that has multiple partition slices is ambiguous unless the user names the exact partition/phase slice.
 
 ## Survey parent units
 
