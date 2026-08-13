@@ -30,7 +30,7 @@ Recommend all eligible not-started and in-progress parent units in parent-map or
 - Use one parent per parent unit and one child per independently mergeable unit.
 - Copy the explicit exit gate applicable to that parent unit. When a phase gate spans several partitions, include only criteria attributable to the selected slice and mark any derived slice-level criteria as derived.
 - Map a plan-defined priority legend when present; otherwise use existing repository priority labels only when the dependency order makes the priority clear.
-- Reuse children only by exact item marker. Ask before mapping an unmarked legacy child.
+- Reuse children by exact item marker first. If none exists, apply the persistent-ID matching rules in `SKILL.md` across this source's other parent units. Treat one unique match as a proposed move; stop when multiple prior children could match. Ask before mapping an unmarked legacy child.
 - Distinguish hard blockers from recommended ordering. Create native `blocked by` relationships only for hard blockers. Keep recommendations in body text only.
 - Link parent-unit gates between parent issues and task dependencies between child issues. A cross-unit task dependency points to the exact child, not merely its parent.
 - Process selected parent units in order and re-survey the next parent unit after completing the previous one.
