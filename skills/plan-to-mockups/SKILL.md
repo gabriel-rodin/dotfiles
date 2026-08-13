@@ -2,17 +2,36 @@
 name: plan-to-mockups
 description: >-
   Convert a user-supplied relative Markdown plan, usually under plans/*.md, into high-fidelity
-  UI mockups in mockups/ using the frontend-design skill. Use when the user gives a plan path and
-  wants rendered HTML and PNG mockups for the screens and states in that plan.
+  UI mockups in mockups/ using either the frontend-design or apple-design skill, chosen by the user
+  through a required interactive prompt. Use when the user gives a plan path and wants rendered
+  HTML and PNG mockups for the screens and states in that plan.
 disable-model-invocation: true
 argument-hint: "[plan-file]"
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent, AskUserQuestion
 ---
 
 # Plan to mockups
 
 Turn one implementation plan into a small, reviewable set of rendered mockups. Treat the plan as
-product truth and `frontend-design` as the design lead.
+product truth and the user's selected design skill as the design lead.
+
+## Design skill selection
+
+After extracting the plan brief but before loading or invoking either design skill, use
+`AskUserQuestion` to require the user to choose exactly one on every run:
+
+- `frontend-design` — Prefer for broad, distinctive web-interface art direction.
+- `apple-design` — Prefer for Apple-style interfaces, physical motion, gestures, materials, and
+  platform-like typography.
+
+Recommend the better fit from the plan brief, place it first, and mark it as recommended, but do
+not select it for the user. Require this confirmation even when the request already mentions a
+preference. If `AskUserQuestion` is unavailable, present the same two choices in an interactive
+prompt and stop until the user answers.
+
+After selection, load and invoke only that skill. Do not read, inspect, invoke, or apply guidance
+from the unselected skill. If the selected skill is unavailable, report that and stop; do not fall
+back to the other skill without a new explicit choice from the user.
 
 ## Input
 
@@ -30,11 +49,11 @@ Use the supplied path exactly as a path relative to the repository root, for exa
    screens, journeys, explicit states and interactions, content vocabulary, and visual or
    accessibility constraints. Explicit plan values override derived design choices.
 
-2. Invoke `frontend-design` before writing the mockups. Give it the extracted brief and the plan's
-   constraints. Follow its brainstorm → critique → revise process and use the resulting direction
-   for the palette, typography, layout, component vocabulary, and signature element. Keep the
-   direction specific to the product; do not fill gaps with a generic dashboard or marketing-page
-   kit.
+2. Run the required design-skill selection prompt. After the user answers, invoke only the selected
+   design skill before writing the mockups. Give it the extracted brief and the plan's constraints.
+   Follow its workflow and use the resulting direction for the palette, typography, layout,
+   component vocabulary, and signature element. Keep the direction specific to the product; do not
+   fill gaps with a generic dashboard or marketing-page kit.
 
    **Design light mode first.** Treat light mode as the canonical base for palette, typography,
    layout, components, and every required screen/state. Complete and review the light-mode set
