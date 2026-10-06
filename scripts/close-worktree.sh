@@ -123,13 +123,13 @@ if [[ -z "$INPUT" ]]; then
       # remaining bytes arrive; only a lone ESC waits out the second.
       IFS= read -rsn2 -t 1 rest || rest=""
       case "$rest" in
-      '[A') ((sel > 0)) && ((sel--)) ;;
-      '[B') ((sel < ${#PICK_SLUGS[@]} - 1)) && ((sel++)) ;;
+      '[A') ((sel > 0)) && sel=$((sel - 1)) ;;
+      '[B') ((sel < ${#PICK_SLUGS[@]} - 1)) && sel=$((sel + 1)) ;;
       '') echo "" && echo "Cancelled." && exit 1 ;;
       esac
       ;;
-    'k') ((sel > 0)) && ((sel--)) ;; # vi keys, since they cost nothing
-    'j') ((sel < ${#PICK_SLUGS[@]} - 1)) && ((sel++)) ;;
+    'k') ((sel > 0)) && sel=$((sel - 1)) ;; # vi keys, since they cost nothing
+    'j') ((sel < ${#PICK_SLUGS[@]} - 1)) && sel=$((sel + 1)) ;;
     'q') echo "" && echo "Cancelled." && exit 1 ;;
     '') break ;; # Enter
     esac
