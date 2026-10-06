@@ -17,11 +17,13 @@ These bias toward caution over speed; use judgment on trivial tasks.
 
 ## Documentation Style
 
-- Write short, concise comments and documentation.
+- No comment or doc is better than one that isn't needed — if the code can stand without it, skip it.
+- When one is needed, keep it short and concise: one or two sentences at most.
 - Describe the intent and purpose of the code, not obvious implementation details.
-- One or two sentences at most — prefer clarity over completeness, never verbose or repetitive.
 
 ## Cross-Project Preferences
 
 - **Actively invoke skills — don't rely on memory of them, and don't default to a tool's built-in instructions instead.** When a task matches an available skill, call the Skill tool at the point of doing the work. Two distinct ways this gets skipped, both count: (1) recalling a skill's gist from having read it earlier instead of invoking it now: editing or reading a skill file doesn't make it apply, it only loads into context when actually invoked; (2) pattern-matching to a tool's own embedded default instructions for the task (e.g. Bash's built-in "committing changes with git" guidance) without first checking whether a more specific skill exists for it — a tool description reading as sufficient is not a reason to skip the skill lookup. Don't substitute default judgment for a repo's or user's explicit, curated process.
 - **Keep answers terse. No trailing summaries.** Don't recap what was just done at the end of a response — the user can read the diff/output themselves.
+- **Never stage, commit, or push unless explicitly asked.** Finish the work, leave it in the working tree, and say what changed — the user reviews diffs before they become commits. A request to *do* something ("convert these docs", "fix this bug") is not a request to commit it; an explicit ask means `/git-commit`, "commit this", or similar in that same message. Approval for one commit does not carry over to the next change.
+  - **Pushing is a separate permission from committing.** "Commit this" authorizes a commit, not a push; being asked to push once does not authorize the next push. Never combine them in one command (`git commit … && git push`) — that removes the user's chance to see the commit before it becomes public. Commit, stop, report what changed, and wait.
