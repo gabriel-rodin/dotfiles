@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prepare GitHub Issue"
+  short_description: "Select, investigate, and plan one GitHub issue"
+  default_prompt: "Use $gh-prepare-issue to select or accept and prepare one GitHub issue for implementation."
