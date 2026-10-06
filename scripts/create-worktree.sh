@@ -163,6 +163,8 @@ MEDIA_ENV_SRC="$REPO_ROOT/media-processing/.env"
 [[ -f "$MEDIA_ENV_SRC" ]] || MEDIA_ENV_SRC="$REPO_ROOT/media-processing/.env.example"
 [[ -f "$MEDIA_ENV_SRC" ]] && cp "$MEDIA_ENV_SRC" "$WORKTREE_DIR/media-processing/.env"
 
+[[ -f "$REPO_ROOT/kotlin/.envrc" ]] && cp "$REPO_ROOT/kotlin/.envrc" "$WORKTREE_DIR/kotlin/.envrc"
+
 # NOTE: dependencies are deliberately NOT installed here. setup-checkout.sh is
 # run by hand (see the printed steps below) so this script stays fast and never
 # spends a minute on npm without being asked. The wiring above is complete, which
