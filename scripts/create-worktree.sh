@@ -6,7 +6,7 @@
 # symlinks backend/data back to the main worktree, copies settings.local.json so
 # hooks still work inside the new worktree, links local agent skills so Codex has
 # the same capabilities in each checkout, and symlinks AGENTS.md/CLAUDE.md back to
-# the main checkout. The scripts themselves are NOT copied — they live in .local/,
+# the main checkout (plus CLAUDE.local.md when present). The scripts themselves are NOT copied — they live in .local/,
 # which is symlinked below, so every worktree runs the main checkout's copy.
 #
 # It does NOT install dependencies or build shared — run your project's setup
@@ -116,7 +116,7 @@ mkdir -p "$WORKTREE_DIR/.claude"
 [[ -d "$REPO_ROOT/.claude/agents" && ! -e "$WORKTREE_DIR/.claude/agents" ]] && ln -s "$REPO_ROOT/.claude/agents" "$WORKTREE_DIR/.claude/agents"
 [[ -d "$REPO_ROOT/.claude/skills" && ! -e "$WORKTREE_DIR/.claude/skills" ]] && ln -s "$REPO_ROOT/.claude/skills" "$WORKTREE_DIR/.claude/skills"
 
-# --- symlink AGENTS.md/CLAUDE.md/.npmrc (gitignored, personal; not brought in
+# --- symlink AGENTS.md/CLAUDE.md/CLAUDE.local.md/.npmrc (gitignored, personal; not brought in
 # by `git worktree add` since they're untracked, so every worktree needs its
 # own link back to stay in sync with the main checkout. REPO_ROOT/CLAUDE.md is
 # itself just a symlink to AGENTS.md, so both worktree links point at
@@ -128,6 +128,7 @@ mkdir -p "$WORKTREE_DIR/.claude"
 [[ -f "$REPO_ROOT/backend/AGENTS.md" && ! -e "$WORKTREE_DIR/backend/CLAUDE.md" ]] && ln -s "$REPO_ROOT/backend/AGENTS.md" "$WORKTREE_DIR/backend/CLAUDE.md"
 [[ -f "$REPO_ROOT/frontend/AGENTS.md" && ! -e "$WORKTREE_DIR/frontend/AGENTS.md" ]] && ln -s "$REPO_ROOT/frontend/AGENTS.md" "$WORKTREE_DIR/frontend/AGENTS.md"
 [[ -f "$REPO_ROOT/frontend/AGENTS.md" && ! -e "$WORKTREE_DIR/frontend/CLAUDE.md" ]] && ln -s "$REPO_ROOT/frontend/AGENTS.md" "$WORKTREE_DIR/frontend/CLAUDE.md"
+[[ -f "$REPO_ROOT/CLAUDE.local.md" && ! -e "$WORKTREE_DIR/CLAUDE.local.md" ]] && ln -s "$REPO_ROOT/CLAUDE.local.md" "$WORKTREE_DIR/CLAUDE.local.md"
 [[ -f "$REPO_ROOT/.npmrc" && ! -e "$WORKTREE_DIR/.npmrc" ]] && ln -s "$REPO_ROOT/.npmrc" "$WORKTREE_DIR/.npmrc"
 
 # --- symlink local Codex skills (keeps worktree Codex capabilities in sync)
