@@ -36,6 +36,7 @@ Apply these rules when writing new code and whenever refactoring.
 - Give defensive checks with non-obvious reasons (such as version skew or old clients) a named predicate or a one-line explanation of why they exist.
 - When a comment is needed, explain why, usually in 1–2 lines per language. Avoid history narration and restating the code; use longer explanations only when needed to capture a non-obvious contract or safety constraint.
 - When extracting a function, move its doc comment with it and check that no doc block is left above the wrong declaration.
+- Never reference a plan, review, scratch note or any other file that isn't tracked in the repo — in code comments, docs, tests, commit messages, PR descriptions or PR/issue comments. Readers can't open it. Check with `git ls-files --error-unmatch <path>`; if it isn't tracked, state the relevant content inline instead.
 
 ## Security
 
@@ -46,6 +47,19 @@ Apply these rules when writing new code and whenever refactoring.
 - Avoid empty or ineffective commits and churn where a commit merely rewrites the previous commit's work.
 - Keep one concern per PR. Do not stack PRs on unmerged ones unless the user asks.
 - Refactoring must preserve behavior. Verify it with tests and an independent equivalence review of the diff; keep behavior changes and bug fixes in separate commits/PRs, subject to the explicit commit permission below.
+
+## PR and Code-Diff Reviews
+
+Apply these passes to PR, branch, and working-tree reviews. Scale depth to the change, but complete every applicable pass or explicitly report what remains unchecked. Do not stop after finding several issues.
+
+- **Establish scope and coverage.** Identify the exact revision, comparison base, and uncommitted changes. Read applicable repository instructions and decisions, plus the issue, acceptance criteria, PR description, and previous reviews where available. Account for every changed file in a compact internal coverage checklist; no repository artifact or lengthy final report is required. Distinguish a full review from verification of specific fixes.
+- **Requirements and observable behavior.** Compare authoritative specifications with actual behavior, including exact wording where required, server-supplied messages, disabled states, navigation, filters, and exports. Check whether tests mock away the real producer of the behavior they claim to verify. Separate approved deviations from missing requirements.
+- **Cross-feature consequences.** Trace changed fields and invariants through other readers and writers, including unchanged code. For ownership, identity, status, or deletion changes, inspect affected numbering, creation, lookups, permissions, pending work, histories, and billing. Check shared components and cross-links for lost behavior or scope. A deferred replacement of a legacy subsystem does not excuse breaking it today.
+- **Integrity across operation sequences.** Check realistic sequences such as move then register, change then void, exchange then issue, and retry or correction after success. Inspect uniqueness constraints, allocation scope, historical dependencies, validation, idempotency, and rollback. Identify unresolved business decisions rather than silently inventing policy.
+- **Concurrency and transactions.** Trace competing operations end to end, including ORM flushes, cached entities, database row and foreign-key locks, advisory locks, and transaction boundaries. Verify framework-specific assumptions. Explain the concrete interleaving for a suspected race and reproduce consequential failures where practical. Distinguish reachable failures from latent risks and unverified hypotheses.
+- **Diff-wide consistency.** Review contracts and mirrors, migrations, fixtures, seed chronology, comments, documentation, and PR claims against final behavior. Inspect removed assertions and changed test expectations for regressions being accepted unintentionally. Apply coding standards with their exceptions; do not present discretionary naming or redundant documentation as mandatory fixes.
+- **Independent verification.** Use behavioral reproductions and appropriate existing tests, with safe isolated data. Exercise relevant UI flows when feasible and report when manual checks were not done. Passing tests prove only what they assert. Preserve user edits and remove only your own temporary reproduction changes. A review alone does not authorize implementing fixes or posting external comments. The commit and push rules below still apply.
+- **Report evidence and limits.** Prioritize findings by consequence, with a location, concrete trigger, expected versus actual behavior, and correction direction. Separate runtime/data-integrity blockers, acceptance blockers, non-blocking defects, unresolved decisions, and optional cleanup. Assess other reviewers' comments independently. For fixes, check the original failure and interactions changed by the fix. State the completed review scope and meaningful coverage gaps; never promise zero remaining defects or infer merge readiness from green tests alone.
 
 ## Cross-Project Preferences
 
